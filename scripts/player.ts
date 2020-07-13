@@ -1,12 +1,12 @@
 import 'phaser';
 import { GameEntity, direction } from "./gameEntity";
-import { PlayerInterface } from './playerInterface';
 import { Enemy } from './enemy';
+import { GameEntityInterface } from './gameEntityInterface';
 
 export class Player extends GameEntity {
   points: number;
-  constructor(sprite: Phaser.Physics.Arcade.Sprite) {
-    super(sprite);
+  constructor(sprite: Phaser.Physics.Arcade.Sprite, entityInterface:GameEntityInterface) {
+    super(sprite, entityInterface);
     this.maxHealth = this.health = 10;    
     this.speed = 160;
     this.runCoeff = 1.5;

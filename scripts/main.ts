@@ -17,6 +17,10 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
     },
   },
 
+  audio: {
+    disableWebAudio: true
+  },
+
   scene: [MenuScene, GameScene],
 
   parent: 'game',

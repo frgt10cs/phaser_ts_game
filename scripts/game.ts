@@ -1,7 +1,7 @@
 import { Player } from "./player";
 import { Enemy } from "./enemy";
 import { Path } from "./path";
-import { PlayerInterface } from "./playerInterface";
+import { GameEntityInterface } from "./gameEntityInterface";
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -108,17 +108,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createEnemy(x: number, y: number): void {
-    let enemySprite = this.physics.add.sprite(x, y, "enemy");
-    let enemy = new Enemy(enemySprite);
+    let enemySprite = this.physics.add.sprite(x, y, "enemy");    
+    let enemyInterface = new GameEntityInterface(this);
+    let enemy = new Enemy(enemySprite, enemyInterface);    
     this.enemyGroup.add(enemySprite);
-    this.enemies.push(enemy);
+    this.enemies.push(enemy);    
   }
 
   private createPlayer(): Player {
     let playerSprite = this.physics.add.sprite(100, 300, "player");
-    this.player = new Player(playerSprite);
-    this.createPlayerAnims();
-    let playerInterface: PlayerInterface = new PlayerInterface(this, this.player);
+    this.player = new Player(playerSprite, new GameEntityInterface(this));
+    this.createPlayerAnims();    
     return this.player;
   }
 

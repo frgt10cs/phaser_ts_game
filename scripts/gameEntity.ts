@@ -1,3 +1,5 @@
+import { GameEntityInterface } from "./gameEntityInterface";
+
 export enum direction {
     left, right
 }
@@ -28,15 +30,17 @@ export abstract class GameEntity {
     }
 
     protected attackTargets: GameEntity[];
+    protected entityInetrface: GameEntityInterface;
 
     sprite: Phaser.Physics.Arcade.Sprite;
     anims: Phaser.Types.Animations.Animation[];
 
-    constructor(sprite: Phaser.Physics.Arcade.Sprite) {
+    constructor(sprite: Phaser.Physics.Arcade.Sprite, entityInetrface:GameEntityInterface) {
         this.sprite = sprite;
         this.sprite.setCollideWorldBounds(true);
         this.sprite.setGravityY(300);
 
+        this.entityInetrface = entityInetrface;
         this.direction = direction.right;
         this.isInAction = false;
         this.isAnimBlocked = false;
@@ -66,12 +70,16 @@ export abstract class GameEntity {
     hurt(damage: number): void {
         if (this._isDead) return;
         this.health -= damage;
-        if (this.health <= 0)
-            this.onDeath();
+        this.entityInetrface.removeHealthPoint();
+        if (this.health <= 0){
+            this.entityInetrface.destroyHealthBar();
+            this.onDeath();                                
+        }            
     }
 
     heal(hp: number) {
         this.health += hp;
+        this.entityInetrface.addHealthPoint();
     }
 
     attack(entities: GameEntity[]): void {
