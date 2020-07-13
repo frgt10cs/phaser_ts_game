@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+      "baseUrl": "./app",
+      "noImplicitAny": false,
+      "noEmitOnError": true,
+      "removeComments": false,
+      "sourceMap": true,
+      "target": "es5",
+      "outDir": "../wwwroot/js",
+      "moduleResolution": "node",
+      "typeRoots": [
+        "../node_modules/phaser/types"
+    ],
+    "types": [
+        "Phaser"
+    ]
+    }
+  }
