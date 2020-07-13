@@ -23,9 +23,11 @@ export abstract class GameEntity {
     protected attackDistance: number;
     protected attackCooldown: number;
     protected _isDead;
-    get isDead():boolean{
+    get isDead(): boolean {
         return this._isDead;
     }
+
+    protected attackTargets: GameEntity[];
 
     sprite: Phaser.Physics.Arcade.Sprite;
     anims: Phaser.Types.Animations.Animation[];
@@ -35,6 +37,7 @@ export abstract class GameEntity {
         this.sprite.setCollideWorldBounds(true);
         this.sprite.setGravityY(300);
 
+        this.direction = direction.right;
         this.isInAction = false;
         this.isAnimBlocked = false;
         this.currentAnimation = "idle";
@@ -44,31 +47,40 @@ export abstract class GameEntity {
         this.attackDistance = 15;
         this.attackCooldown;
         this._isDead = false;
+        this.attackTargets = [];
+        this.blockingAnims = ["attack", "attack_walk", "death"];
 
-        this.sprite.on("animationcomplete", (animation, frame) => {
-            if (this.blockingAnims.indexOf(animation.key.split("|")[1]) != -1) this.isAnimBlocked = false;
+        this.sprite.on("animationcomplete", (animation, frame) => {                    
+            if (this.blockingAnims.indexOf(animation.key.split("|")[1]) != -1)
+                this.isAnimBlocked = false;                            
+            if (animation.key.includes("attack")) {
+                this.attackTargets.forEach((target) => {
+                    if (!target._isDead && Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.attackDistance) {
+                        target.hurt(this.damage);
+                    }
+                });
+            }
         }, this);
     }
 
     hurt(damage: number): void {
+        if (this._isDead) return;
         this.health -= damage;
         if (this.health <= 0)
-            this.onDeath();        
+            this.onDeath();
     }
 
     heal(hp: number) {
         this.health += hp;
     }
 
-    attack(entity: GameEntity): void {
-        if (entity._isDead) return;
-        if (Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, entity.sprite.x, entity.sprite.y) <= this.attackDistance && !this.isAttacking) {
-            entity.hurt(this.damage);
-            this.isAttacking = true;
-            setTimeout(() => {
-                this.isAttacking = false;
-            }, this.attackCooldown)
-        }
+    attack(entities: GameEntity[]): void {
+        this.isAttacking = true;
+        this.attackTargets = entities;
+        setTimeout(() => {
+            this.isAttacking = false;
+            this.attackTargets = [];
+        }, this.attackCooldown);
     }
 
     refresh(): void {
@@ -80,15 +92,15 @@ export abstract class GameEntity {
     onDeath(): void {
         this._isDead = true;
         this._isAble = false;
-        this.playAnim("death");
+        this.playAnim("death", true);
         this.sprite.setVelocityX(0);
-        console.log("KIlled!");
     }
 
-    playAnim(animName: string, startFrame: number = 0): void {
+    playAnim(animName: string, force: boolean = false, startFrame: number = 0): void {        
+        if (this.isAnimBlocked && !force) return;
         this.sprite.anims.play(this.entityName + "|" + animName + "|" + direction[this.direction], true, startFrame);
         if (this.blockingAnims.indexOf(animName) != -1) {
-            this.isAnimBlocked = true;
-        }
+            this.isAnimBlocked = true;            
+        }        
     }
 }

@@ -1,6 +1,5 @@
-import { GameScene } from "./main";
 import { GameEntity } from "./gameEntity";
-import { Path } from "./path";
+import { GameScene } from "./game";
 
 export abstract class GameEntityInterface {
     protected scene:Phaser.Scene;

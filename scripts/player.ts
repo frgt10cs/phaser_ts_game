@@ -7,8 +7,7 @@ export class Player extends GameEntity {
   points: number;
   constructor(sprite: Phaser.Physics.Arcade.Sprite) {
     super(sprite);
-    this.maxHealth = this.health = 10;
-    this.direction = direction.right;
+    this.maxHealth = this.health = 10;    
     this.speed = 160;
     this.runCoeff = 1.5;
     this.currentSpeed = 0;
@@ -51,9 +50,7 @@ export class Player extends GameEntity {
         else if (this.currentAnimation == "idle") this.currentAnimation = "attack";
         this.isInAction = true;
 
-        enemies.forEach((enemy: Enemy) => {
-          this.attack(enemy);
-        });
+        this.attack(enemies);
       }
     }
     else {
@@ -66,7 +63,6 @@ export class Player extends GameEntity {
       this.isInAction = true;
     }
 
-    if (!this.isAnimBlocked)
-      this.playAnim(this.currentAnimation);
+    this.playAnim(this.currentAnimation);
   }
 }

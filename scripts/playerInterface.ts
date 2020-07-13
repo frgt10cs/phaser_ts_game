@@ -1,5 +1,4 @@
 import { GameEntityInterface } from "./gameEntityInterface";
-import { GameScene } from "./main";
 import { GameEntity } from "./gameEntity";
 
 export class PlayerInterface extends GameEntityInterface {
