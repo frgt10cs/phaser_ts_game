@@ -10,7 +10,7 @@ export class Enemy extends GameEntity {
         this.damage = 1;
         this.maxHealth = this.health = 40;
         this.attackCooldown = 500;
-        this.entityInetrface.generateHealthBar(this.sprite.x, this.sprite.y + 10, this.maxHealth, 0.4);
+        this.entityInetrface.generateHealthBar(this.sprite.x, this.sprite.y - 30, this.maxHealth, 0.2);
     }
 
     autoControl(player: GameEntity): void {
@@ -27,7 +27,10 @@ export class Enemy extends GameEntity {
                         this.direction = direction.left;
                         this.currentSpeed = -this.speed;
                     }
-                    this.currentAnimation = "walk";
+                    if(this.sprite.body.touching.down)
+                        this.currentAnimation = "walk";
+                    else
+                        this.currentAnimation = "fall";
                 }
                 else {
                     this.currentAnimation = "attack";
@@ -37,6 +40,7 @@ export class Enemy extends GameEntity {
         }
         this.sprite.setVelocityX(this.currentSpeed);
         this.playAnim(this.currentAnimation);
+        this.entityInetrface.moveHealthBar(this.sprite.x, this.sprite.y - 30);
     }
 
     onDeath(): void {

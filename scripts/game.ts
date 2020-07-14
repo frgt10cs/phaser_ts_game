@@ -2,6 +2,7 @@ import { Player } from "./player";
 import { Enemy } from "./enemy";
 import { Path } from "./path";
 import { GameEntityInterface } from "./gameEntityInterface";
+import { Rune, DamageRune, HealingRune } from "./rune";
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -14,11 +15,16 @@ export class GameScene extends Phaser.Scene {
   private player: Player;
   private enemies: Enemy[];
   private enemyGroup: Phaser.Physics.Arcade.Group;
+  private currentRune: Rune;
+  private pop:GameEntityInterface;
+  private groundLevel:number;
 
   controlKeys: Phaser.Input.Keyboard.Key[];
 
   constructor() {
     super(sceneConfig);
+    this.groundLevel = 400;
+    this.controlKeys = [];
   }
 
   public restart() {
@@ -27,8 +33,7 @@ export class GameScene extends Phaser.Scene {
 
   public create() {
 
-    this.input.keyboard.on('keydown_R', this.restart, this);
-    this.controlKeys = [];
+    this.input.keyboard.on('keydown_R', this.restart, this);    
     this.controlKeys["W"] = this.input.keyboard.addKey("W");
     this.controlKeys["S"] = this.input.keyboard.addKey("S");
     this.controlKeys["A"] = this.input.keyboard.addKey("A");
@@ -43,14 +48,45 @@ export class GameScene extends Phaser.Scene {
     platforms.create(200, 600, "platform").setScale(0.5).refreshBody();
 
     // aids
-    let firstAids = this.physics.add.group();
-    firstAids.create(300, 300, "firstAid");
+    let firstAids = this.physics.add.group();    
     this.physics.add.collider(firstAids, platforms);
+    setInterval(()=>{
+      let randomInt = Math.floor(50+ Math.random() * 750);
+      firstAids.create(randomInt, this.groundLevel, "firstAid");
+    }, 25000);
 
     // damage
-    let damageItems = this.physics.add.group();
-    damageItems.create(600, 300, "damageItem");
+    let damageItems = this.physics.add.group();    
     this.physics.add.collider(damageItems, platforms);
+    setInterval(()=>{
+      let randomInt = Math.floor(50+ Math.random() * 750);
+      damageItems.create(randomInt, this.groundLevel, "damageItem");
+    }, 45000);
+
+    // runes
+    let runeGroup = this.physics.add.group();
+    let runeSpawner = this.physics.add.sprite(100, 400, "runeSpawner");    
+    this.physics.add.collider(runeGroup, platforms);
+    this.physics.add.collider(runeSpawner, platforms);
+    this.physics.add.collider(runeSpawner, runeGroup);
+    let runeSprite;
+    let maxRunesCount = 2;
+    setInterval(() => {
+      if (this.currentRune != null)
+        this.currentRune.sprite.destroy();
+      let randomInt = Math.floor(Math.random() * maxRunesCount);
+      switch (randomInt) {
+        case 0:
+          runeSprite = this.add.sprite(runeSpawner.x, runeSpawner.y - 10, "damageRune");
+          this.currentRune = new DamageRune(runeSprite);
+          break;
+        case 1:
+          runeSprite = this.add.sprite(runeSpawner.x, runeSpawner.y - 10, "attackSpeedRune");
+          this.currentRune = new HealingRune(runeSprite);
+          break;
+      }      
+      runeGroup.add(runeSprite);                      
+    }, 40000);
 
     // player
     this.player = this.createPlayer();
@@ -68,13 +104,18 @@ export class GameScene extends Phaser.Scene {
       else {
         clearInterval(enemySpawnInterval);
       }
-    }, 10000);
+      this.pop = new GameEntityInterface(this);
+    }, 10000);    
 
     this.physics.add.overlap(this.player.sprite, firstAids,
-      (playerSprite, firstAid: Phaser.Physics.Arcade.Sprite) => { this.player.heal(10); firstAid.disableBody(true, true) }, null, this);
+      (playerSprite, aid: Phaser.Physics.Arcade.Sprite) => { this.player.heal(4); aid.destroy(); }, null, this);
+
 
     this.physics.add.overlap(this.player.sprite, damageItems,
-      (playerSprite, damageItem: Phaser.Physics.Arcade.Sprite) => { setTimeout(() => { this.player.hurt(10); }, 1000); damageItem.disableBody(true, true) }, null, this);
+      (playerSprite, damageItem: Phaser.Physics.Arcade.Sprite) => { this.player.hurt(2); damageItem.destroy(); }, null, this);
+
+    this.physics.add.overlap(this.player.sprite, runeGroup,
+      (playerSprite, rune: Phaser.Physics.Arcade.Sprite) => { this.currentRune.action(this.player); this.currentRune = null; rune.destroy(); }, null, this);
   }
 
   public update() {
@@ -89,10 +130,13 @@ export class GameScene extends Phaser.Scene {
 
   public preload() {
     this.load.image("platform", Path.getImagePath("hotpng.com.png"));
-    this.load.image("firstAid", Path.getImagePath("first_aid.svg"));
-    this.load.image("damageItem", Path.getImagePath("damage_item.svg"));
-    this.load.image("healthBar", Path.getImagePath("healthBar.png"));
-    this.load.image("healthPoint", Path.getImagePath("healthPoint.png"));
+    this.load.image("firstAid", Path.getImagePath("environment/first_aid.svg"));
+    this.load.image("damageItem", Path.getImagePath("environment/damage_item.svg"));
+    this.load.image("healthBar", Path.getImagePath("ui/healthBar.png"));
+    this.load.image("healthPoint", Path.getImagePath("ui/healthPoint.png"));
+    this.load.image("damageRune", Path.getImagePath("environment/damage_rune.png"));
+    this.load.image("attackSpeedRune", Path.getImagePath("environment/attack_speed_rune.png"));
+    this.load.image("runeSpawner", Path.getImagePath("environment/rune_spawner.png"));
 
     this.load.image("player", Path.getImagePath("player/player.png"));
 
@@ -108,17 +152,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createEnemy(x: number, y: number): void {
-    let enemySprite = this.physics.add.sprite(x, y, "enemy");    
+    let enemySprite = this.physics.add.sprite(x, y, "enemy");
     let enemyInterface = new GameEntityInterface(this);
-    let enemy = new Enemy(enemySprite, enemyInterface);    
+    let enemy = new Enemy(enemySprite, enemyInterface);
     this.enemyGroup.add(enemySprite);
-    this.enemies.push(enemy);    
+    this.enemies.push(enemy);
   }
 
   private createPlayer(): Player {
     let playerSprite = this.physics.add.sprite(100, 300, "player");
     this.player = new Player(playerSprite, new GameEntityInterface(this));
-    this.createPlayerAnims();    
+    this.createPlayerAnims();
     return this.player;
   }
 
@@ -233,7 +277,7 @@ export class GameScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers('playerAnim', { start: 72, end: 77 }),
       frameRate: 15,
       repeat: 0
-    });    
+    });
   }
 
   private createEnemyAnims() {
@@ -289,6 +333,20 @@ export class GameScene extends Phaser.Scene {
     this.anims.create({
       key: 'enemy|idle|left',
       frames: this.anims.generateFrameNumbers('enemyAnim', { start: 42, end: 45 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'enemy|fall|right',
+      frames: this.anims.generateFrameNumbers('enemyAnim', { start: 47, end: 47 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'enemy|fall|left',
+      frames: this.anims.generateFrameNumbers('enemyAnim', { start: 41, end: 41 }),
       frameRate: 10,
       repeat: -1
     });    

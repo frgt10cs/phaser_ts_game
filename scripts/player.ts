@@ -14,6 +14,7 @@ export class Player extends GameEntity {
     this.damage = 10;
     this.entityName = "player";
     this.attackCooldown = 500;
+    this.entityInetrface.generateHealthBar(100, 100, this.maxHealth);
   }
 
   handleControl(controlKeys: Phaser.Input.Keyboard.Key[], activePointer: Phaser.Input.Pointer, enemies: Enemy[]): void {
@@ -44,7 +45,7 @@ export class Player extends GameEntity {
         this.isInAction = true;
       }
 
-      if (activePointer.leftButtonDown() || controlKeys["Enter"].isDown) {
+      if (activePointer.leftButtonDown() || controlKeys["Enter"].isDown && !this.isAttacking) {
         if (this.currentAnimation == "walk")
           this.currentAnimation = "attack_walk";
         else if (this.currentAnimation == "idle") this.currentAnimation = "attack";

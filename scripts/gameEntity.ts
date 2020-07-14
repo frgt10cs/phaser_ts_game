@@ -21,9 +21,9 @@ export abstract class GameEntity {
     public blockingAnims: string[];
     protected entityName: string;
     public isAttacking;
-    protected damage: number;
+    public damage: number;
     protected attackDistance: number;
-    protected attackCooldown: number;
+    public attackCooldown: number;
     protected _isDead;
     get isDead(): boolean {
         return this._isDead;
@@ -70,7 +70,7 @@ export abstract class GameEntity {
     hurt(damage: number): void {
         if (this._isDead) return;
         this.health -= damage;
-        this.entityInetrface.removeHealthPoint();
+        this.entityInetrface.removeHealthPoints(damage);
         if (this.health <= 0){
             this.entityInetrface.destroyHealthBar();
             this.onDeath();                                
@@ -79,7 +79,7 @@ export abstract class GameEntity {
 
     heal(hp: number) {
         this.health += hp;
-        this.entityInetrface.addHealthPoint();
+        this.entityInetrface.addHealthPoints(hp);
     }
 
     attack(entities: GameEntity[]): void {
