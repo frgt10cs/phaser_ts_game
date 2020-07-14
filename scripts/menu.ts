@@ -1,4 +1,4 @@
-import { Path } from "./path";
+import { SoundManager } from "./soundManager";
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -6,10 +6,9 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: "Scene"
 }
 
-export class MenuScene extends Phaser.Scene {
-  menuMusic: Phaser.Sound.BaseSound;
+export class MenuScene extends Phaser.Scene {  
   constructor() {
-    super(sceneConfig);
+    super(sceneConfig);    
   }
 
   create(): void {
@@ -20,26 +19,20 @@ export class MenuScene extends Phaser.Scene {
       .on('pointerout', () => this.enterButtonRestState(playBtn))
       .on('pointerdown', () => this.enterButtonActiveState(playBtn));
 
-    const soundBtn = this.add.text(100, 200, "Sound: on", { fill: "#0f0" })
+    const soundBtn = this.add.text(100, 200, "Music: off", { fill: "#0f0" })
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => { 
-        if(soundBtn.text == "Sound: on"){
-          soundBtn.setText("Sound: off"); 
-          this.menuMusic.pause();
+        if(SoundManager.isEnabled){
+          soundBtn.setText("Music: off");          
         }
         else{
-          soundBtn.setText("Sound: on"); 
-          this.menuMusic.resume();
-        }})
+          soundBtn.setText("Music: on");           
+        }
+        SoundManager.isEnabled = !SoundManager.isEnabled;
+      })
       .on('pointerover', () => this.enterButtonHoverState(soundBtn))
       .on('pointerout', () => this.enterButtonRestState(soundBtn))
-      .on('pointerdown', () => this.enterButtonActiveState(soundBtn));
-
-    
-    this.menuMusic = this.sound.add("menuAuido");
-    setTimeout(()=>{
-      this.menuMusic.play();
-    }, 500);    
+      .on('pointerdown', () => this.enterButtonActiveState(soundBtn));    
   }
 
   update(): void {
@@ -47,7 +40,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.audio("menuAuido", Path.getAudioPath("menu.mp3"));
+    
   }
 
   enterButtonHoverState(button) {

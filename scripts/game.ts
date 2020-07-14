@@ -3,6 +3,7 @@ import { Enemy } from "./enemy";
 import { Path } from "./path";
 import { GameEntityInterface } from "./gameEntityInterface";
 import { Rune, DamageRune, HealingRune } from "./rune";
+import { SoundManager, SoundState } from "./soundManager";
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -16,8 +17,12 @@ export class GameScene extends Phaser.Scene {
   private enemies: Enemy[];
   private enemyGroup: Phaser.Physics.Arcade.Group;
   private currentRune: Rune;
-  private pop:GameEntityInterface;
-  private groundLevel:number;
+  private groundLevel: number;
+  private wave: number;
+  private waveInterval: number;
+  private readonly maxWaveDamage:number;
+  private readonly maxWaveInterval:number;
+  private enemyCount: number;
 
   controlKeys: Phaser.Input.Keyboard.Key[];
 
@@ -25,6 +30,11 @@ export class GameScene extends Phaser.Scene {
     super(sceneConfig);
     this.groundLevel = 400;
     this.controlKeys = [];
+    this.enemies = [];
+    this.wave = 0;
+    this.waveInterval = 10000;
+    this.maxWaveDamage = 4;
+    this.maxWaveInterval = 3000;
   }
 
   public restart() {
@@ -33,7 +43,15 @@ export class GameScene extends Phaser.Scene {
 
   public create() {
 
-    this.input.keyboard.on('keydown_R', this.restart, this);    
+    this.input.keyboard.on('keydown_R', this.restart, this);
+    this.input.keyboard.on('keydown_M', () => {
+      if (SoundManager.isEnabled) {
+        if (SoundManager.soundState == SoundState.paused)
+          SoundManager.resume();
+        else SoundManager.pause();
+      }
+    }, this);
+
     this.controlKeys["W"] = this.input.keyboard.addKey("W");
     this.controlKeys["S"] = this.input.keyboard.addKey("S");
     this.controlKeys["A"] = this.input.keyboard.addKey("A");
@@ -48,24 +66,24 @@ export class GameScene extends Phaser.Scene {
     platforms.create(200, 600, "platform").setScale(0.5).refreshBody();
 
     // aids
-    let firstAids = this.physics.add.group();    
+    let firstAids = this.physics.add.group();
     this.physics.add.collider(firstAids, platforms);
-    setInterval(()=>{
-      let randomInt = Math.floor(50+ Math.random() * 750);
+    setInterval(() => {
+      let randomInt = Math.floor(50 + Math.random() * 750);
       firstAids.create(randomInt, this.groundLevel, "firstAid");
     }, 25000);
 
     // damage
-    let damageItems = this.physics.add.group();    
+    let damageItems = this.physics.add.group();
     this.physics.add.collider(damageItems, platforms);
-    setInterval(()=>{
-      let randomInt = Math.floor(50+ Math.random() * 750);
+    setInterval(() => {
+      let randomInt = Math.floor(50 + Math.random() * 750);
       damageItems.create(randomInt, this.groundLevel, "damageItem");
     }, 45000);
 
     // runes
     let runeGroup = this.physics.add.group();
-    let runeSpawner = this.physics.add.sprite(100, 400, "runeSpawner");    
+    let runeSpawner = this.physics.add.sprite(100, 400, "runeSpawner");
     this.physics.add.collider(runeGroup, platforms);
     this.physics.add.collider(runeSpawner, platforms);
     this.physics.add.collider(runeSpawner, runeGroup);
@@ -84,8 +102,8 @@ export class GameScene extends Phaser.Scene {
           runeSprite = this.add.sprite(runeSpawner.x, runeSpawner.y - 10, "attackSpeedRune");
           this.currentRune = new HealingRune(runeSprite);
           break;
-      }      
-      runeGroup.add(runeSprite);                      
+      }
+      runeGroup.add(runeSprite);
     }, 40000);
 
     // player
@@ -95,7 +113,6 @@ export class GameScene extends Phaser.Scene {
     // enemies
     this.enemyGroup = this.physics.add.group();
     this.physics.add.collider(this.enemyGroup, platforms);
-    this.enemies = [];
     this.createEnemyAnims();
     let enemySpawnInterval = setInterval(() => {
       if (!this.player.isDead) {
@@ -104,28 +121,36 @@ export class GameScene extends Phaser.Scene {
       else {
         clearInterval(enemySpawnInterval);
       }
-      this.pop = new GameEntityInterface(this);
-    }, 10000);    
+    }, this.waveInterval);
 
     this.physics.add.overlap(this.player.sprite, firstAids,
       (playerSprite, aid: Phaser.Physics.Arcade.Sprite) => { this.player.heal(4); aid.destroy(); }, null, this);
-
 
     this.physics.add.overlap(this.player.sprite, damageItems,
       (playerSprite, damageItem: Phaser.Physics.Arcade.Sprite) => { this.player.hurt(2); damageItem.destroy(); }, null, this);
 
     this.physics.add.overlap(this.player.sprite, runeGroup,
       (playerSprite, rune: Phaser.Physics.Arcade.Sprite) => { this.currentRune.action(this.player); this.currentRune = null; rune.destroy(); }, null, this);
+
+      this.add.text(200, 100, "Killed: ");
+
+    if (SoundManager.isEnabled) {
+      let playlist: Phaser.Sound.BaseSound[] = [];
+      playlist.push(this.sound.add("slipknot"));
+      playlist.push(this.sound.add("while_she_sleeps"));
+      playlist.push(this.sound.add("powerman_5000"));
+      SoundManager.init(playlist);
+      SoundManager.play();
+    }
   }
 
   public update() {
-
     if (this.player.isAble)
       this.player.handleControl(this.controlKeys, this.game.input.activePointer, this.enemies);
     this.enemies.forEach((enemy: Enemy) => {
       if (enemy.isAble)
         enemy.autoControl(this.player);
-    })
+    });
   }
 
   public preload() {
@@ -149,12 +174,25 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet("enemyAnim",
       Path.getImagePath("enemy/enemy_anim_spritesheet.png"),
       { frameWidth: 48, frameHeight: 48, margin: 0, spacing: 0 });
+
+    if (SoundManager.isEnabled) {
+      this.load.audio("slipknot", Path.getAudioPath("slipknot.mp3"));
+      this.load.audio("while_she_sleeps", Path.getAudioPath("while_she_sleeps.mp3"));
+      this.load.audio("powerman_5000", Path.getAudioPath("powerman_5000.mp3"));
+    }
   }
 
   private createEnemy(x: number, y: number): void {
     let enemySprite = this.physics.add.sprite(x, y, "enemy");
     let enemyInterface = new GameEntityInterface(this);
     let enemy = new Enemy(enemySprite, enemyInterface);
+    let waveDamage = this.wave + 1;
+    enemy.damage = waveDamage >= this.maxWaveDamage ? this.maxWaveDamage : waveDamage;
+    this.enemyCount++;
+    if (this.enemyCount % 10 == 0) {
+      this.wave++;
+      this.waveInterval -= this.waveInterval <= this.maxWaveInterval ? 0 : 250;
+    }
     this.enemyGroup.add(enemySprite);
     this.enemies.push(enemy);
   }
@@ -349,6 +387,6 @@ export class GameScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers('enemyAnim', { start: 41, end: 41 }),
       frameRate: 10,
       repeat: -1
-    });    
+    });
   }
 }
