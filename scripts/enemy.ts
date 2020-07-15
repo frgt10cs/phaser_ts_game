@@ -3,11 +3,11 @@ import { GameEntityInterface } from "./gameEntityInterface";
 
 export class Enemy extends GameEntity {
 
-    constructor(sprite: Phaser.Physics.Arcade.Sprite, enemyInterface: GameEntityInterface, sounds:Phaser.Sound.BaseSound[] = []) {
+    constructor(damage:number, sprite: Phaser.Physics.Arcade.Sprite, enemyInterface: GameEntityInterface, sounds:Phaser.Sound.BaseSound[] = []) {
         super(sprite, enemyInterface, sounds);
         this.speed = 80;
         this.entityName = "enemy";
-        this.damage = 1;
+        this.damage = damage;
         this.maxHealth = this.health = 40;
         this.attackCooldown = 500;
         this.entityInetrface.generateHealthBar(this.sprite.x, this.sprite.y - 30, this.maxHealth, 0.2);

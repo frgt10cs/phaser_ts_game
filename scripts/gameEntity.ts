@@ -32,6 +32,7 @@ export abstract class GameEntity {
 
     protected attackTargets: GameEntity[];
     protected entityInetrface: GameEntityInterface;
+    protected emitters: Phaser.GameObjects.Particles.ParticleEmitter[];
 
     sprite: Phaser.Physics.Arcade.Sprite;
     anims: Phaser.Types.Animations.Animation[];
@@ -55,6 +56,7 @@ export abstract class GameEntity {
         this.attackTargets = [];
         this.blockingAnims = ["attack", "attack_walk", "death"];
         this.sounds = sounds;
+        this.emitters = [];
 
         this.sprite.on("animationcomplete", (animation, frame) => {
             if (this.blockingAnims.indexOf(animation.key.split("|")[1]) != -1)
@@ -86,6 +88,8 @@ export abstract class GameEntity {
 
     heal(hp: number) {
         this.health += hp;
+        if (this.health > this.maxHealth)
+            this.health = this.maxHealth;
         this.entityInetrface.addHealthPoints(hp);
     }
 
@@ -128,5 +132,22 @@ export abstract class GameEntity {
                 break;
             }
         }
+    }
+
+    addEmitter(emitter: Phaser.GameObjects.Particles.ParticleEmitter, timeout: number): void {
+        this.emitters.push(emitter);
+        setTimeout(() => {
+            let index = this.emitters.indexOf(emitter);
+            if (index > -1)
+                this.emitters.splice(index, 1);
+            emitter.remove();
+        }, timeout);
+    }
+
+    syncEffectsPosition(): void {
+        this.emitters.forEach((emitter) => {
+            emitter.setPosition({ min: this.sprite.x - 20, max: this.sprite.x + 5 },
+                { min: this.sprite.y - 10, max: this.sprite.y + 10 });
+        });
     }
 }

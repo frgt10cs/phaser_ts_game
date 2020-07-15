@@ -65,5 +65,6 @@ export class Player extends GameEntity {
     }
 
     this.playAnim(this.currentAnimation);
-  }
+    this.syncEffectsPosition();
+  }    
 }
