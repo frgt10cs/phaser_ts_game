@@ -20,28 +20,32 @@ export class GameScene extends Phaser.Scene {
   private groundLevel: number;
   private wave: number;
   private waveInterval: number;
-  private readonly maxWaveDamage:number;
-  private readonly maxWaveInterval:number;
+  private readonly maxWaveDamage: number;
+  private readonly maxWaveInterval: number;
   private enemyCount: number;
+  private intervals;
 
   controlKeys: Phaser.Input.Keyboard.Key[];
 
   constructor() {
     super(sceneConfig);
-    this.groundLevel = 400;
-    this.controlKeys = [];
-    this.enemies = [];
-    this.wave = 0;
-    this.waveInterval = 10000;
+    this.groundLevel = 685;
+    this.controlKeys = [];    
     this.maxWaveDamage = 4;
-    this.maxWaveInterval = 3000;
+    this.maxWaveInterval = 3000;    
   }
 
   public restart() {
+    this.intervals.forEach(clearInterval);
     this.scene.restart();
   }
 
   public create() {
+
+    this.wave = 0;
+    this.waveInterval = 10000;
+    this.intervals = [];
+    this.enemies = [];    
 
     this.input.keyboard.on('keydown_R', this.restart, this);
     this.input.keyboard.on('keydown_M', () => {
@@ -59,52 +63,68 @@ export class GameScene extends Phaser.Scene {
     this.controlKeys["Enter"] = this.input.keyboard.addKey("ENTER");
     this.controlKeys["Shift"] = this.input.keyboard.addKey("SHIFT");
     this.controlKeys["Space"] = this.input.keyboard.addKey("SPACE");
-
+    
     // platforms
     let platforms = this.physics.add.staticGroup();
-    platforms.create(600, 520, "platform").setScale(0.5).refreshBody();
-    platforms.create(200, 600, "platform").setScale(0.5).refreshBody();
+    let ground = this.add.sprite(640, 715, "");
+    ground.displayWidth = 1280;
+    ground.displayHeight = 40;
+    platforms.add(ground);
+    platforms.refresh();
+
+    let bg = this.add.image(640, 360, "background");
 
     // aids
     let firstAids = this.physics.add.group();
     this.physics.add.collider(firstAids, platforms);
-    setInterval(() => {
-      let randomInt = Math.floor(50 + Math.random() * 750);
-      firstAids.create(randomInt, this.groundLevel, "firstAid");
+    let aidsInterval = setInterval(() => {
+      if (!this.player.isDead) {
+        let randomInt = Math.floor(50 + Math.random() * 750);
+        firstAids.create(randomInt, this.groundLevel, "firstAid");
+      }
+      else {
+        clearInterval(aidsInterval);
+      }
     }, 25000);
+    this.intervals.push(aidsInterval);
 
     // damage
     let damageItems = this.physics.add.group();
     this.physics.add.collider(damageItems, platforms);
-    setInterval(() => {
-      let randomInt = Math.floor(50 + Math.random() * 750);
-      damageItems.create(randomInt, this.groundLevel, "damageItem");
+    let damageItemsInterval = setInterval(() => {
+      if (!this.player.isDead) {
+        let randomInt = Math.floor(50 + Math.random() * 750);
+        damageItems.create(randomInt, this.groundLevel, "damageItem");
+      }
+      else clearInterval(damageItemsInterval);
     }, 45000);
+    this.intervals.push(damageItemsInterval);
 
     // runes
     let runeGroup = this.physics.add.group();
-    let runeSpawner = this.physics.add.sprite(100, 400, "runeSpawner");
+    let runeSpawner = this.physics.add.sprite(100, this.groundLevel, "runeSpawner");
     this.physics.add.collider(runeGroup, platforms);
     this.physics.add.collider(runeSpawner, platforms);
     this.physics.add.collider(runeSpawner, runeGroup);
     let runeSprite;
     let maxRunesCount = 2;
-    setInterval(() => {
+    let runeInterval = setInterval(() => {
       if (this.currentRune != null)
         this.currentRune.sprite.destroy();
       let randomInt = Math.floor(Math.random() * maxRunesCount);
       switch (randomInt) {
         case 0:
-          runeSprite = this.add.sprite(runeSpawner.x, runeSpawner.y - 10, "damageRune");
-          this.currentRune = new DamageRune(runeSprite);
+          runeSprite = this.add.sprite(runeSpawner.x, runeSpawner.y - 20, "damageRune");
+          this.currentRune = new DamageRune("doubleDamage",runeSprite);
           break;
         case 1:
-          runeSprite = this.add.sprite(runeSpawner.x, runeSpawner.y - 10, "attackSpeedRune");
-          this.currentRune = new HealingRune(runeSprite);
+          runeSprite = this.add.sprite(runeSpawner.x, runeSpawner.y - 20, "healingRune");
+          this.currentRune = new HealingRune("regeneration",runeSprite);
           break;
       }
       runeGroup.add(runeSprite);
     }, 40000);
+    this.intervals.push(runeInterval);
 
     // player
     this.player = this.createPlayer();
@@ -122,17 +142,19 @@ export class GameScene extends Phaser.Scene {
         clearInterval(enemySpawnInterval);
       }
     }, this.waveInterval);
+    this.intervals.push(enemySpawnInterval);
 
     this.physics.add.overlap(this.player.sprite, firstAids,
-      (playerSprite, aid: Phaser.Physics.Arcade.Sprite) => { this.player.heal(4); aid.destroy(); }, null, this);
+      (playerSprite, aid: Phaser.Physics.Arcade.Sprite) => { this.player.playSound("thanks"); this.player.heal(4); aid.destroy(); }, null, this);
 
     this.physics.add.overlap(this.player.sprite, damageItems,
-      (playerSprite, damageItem: Phaser.Physics.Arcade.Sprite) => { this.player.hurt(2); damageItem.destroy(); }, null, this);
+      (playerSprite, damageItem: Phaser.Physics.Arcade.Sprite) => { this.player.playSound("anger"); this.player.hurt(2); damageItem.destroy(); }, null, this);
 
     this.physics.add.overlap(this.player.sprite, runeGroup,
-      (playerSprite, rune: Phaser.Physics.Arcade.Sprite) => { this.currentRune.action(this.player); this.currentRune = null; rune.destroy(); }, null, this);
+      (playerSprite, rune: Phaser.Physics.Arcade.Sprite) => { this.player.playSound(this.currentRune.name); this.currentRune.action(this.player); this.currentRune = null; rune.destroy(); }, null, this);
 
-      this.add.text(200, 100, "Killed: ");
+    this.add.text(170, 20, "Control: WASD - move, SHIFT - run, SPACE - jump, ENTER - attack.");
+    this.add.text(170, 40, "         M -  mute/unmute music, R - restart.");
 
     if (SoundManager.isEnabled) {
       let playlist: Phaser.Sound.BaseSound[] = [];
@@ -154,13 +176,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   public preload() {
-    this.load.image("platform", Path.getImagePath("hotpng.com.png"));
+    this.load.image("background", Path.getImagePath("environment/background.jpg"));
     this.load.image("firstAid", Path.getImagePath("environment/first_aid.svg"));
     this.load.image("damageItem", Path.getImagePath("environment/damage_item.svg"));
     this.load.image("healthBar", Path.getImagePath("ui/healthBar.png"));
     this.load.image("healthPoint", Path.getImagePath("ui/healthPoint.png"));
     this.load.image("damageRune", Path.getImagePath("environment/damage_rune.png"));
-    this.load.image("attackSpeedRune", Path.getImagePath("environment/attack_speed_rune.png"));
+    this.load.image("healingRune", Path.getImagePath("environment/healing_rune.png"));
     this.load.image("runeSpawner", Path.getImagePath("environment/rune_spawner.png"));
 
     this.load.image("player", Path.getImagePath("player/player.png"));
@@ -173,23 +195,36 @@ export class GameScene extends Phaser.Scene {
 
     this.load.spritesheet("enemyAnim",
       Path.getImagePath("enemy/enemy_anim_spritesheet.png"),
-      { frameWidth: 48, frameHeight: 48, margin: 0, spacing: 0 });
+      { frameWidth: 48, frameHeight: 48, margin: 0, spacing: 0 });      
+
+      this.load.audio("player|doubleDamage", Path.getAudioPath("player/double_damage.mp3"));
+      this.load.audio("player|regeneration", Path.getAudioPath("player/regeneration.mp3"));
+      this.load.audio("player|anger", Path.getAudioPath("player/anger.mp3"));
+      this.load.audio("player|thanks", Path.getAudioPath("player/thanks.mp3"));
+      this.load.audio("player|death", Path.getAudioPath("player/death.mp3"));  
+      
+      this.load.audio("enemy|kill", Path.getAudioPath("enemy/kill.mp3"));
+      this.load.audio("enemy|death", Path.getAudioPath("enemy/death.mp3"));    
 
     if (SoundManager.isEnabled) {
-      this.load.audio("slipknot", Path.getAudioPath("slipknot.mp3"));
-      this.load.audio("while_she_sleeps", Path.getAudioPath("while_she_sleeps.mp3"));
-      this.load.audio("powerman_5000", Path.getAudioPath("powerman_5000.mp3"));
+      this.load.audio("slipknot", Path.getAudioPath("music/slipknot.mp3"));
+      this.load.audio("while_she_sleeps", Path.getAudioPath("music/while_she_sleeps.mp3"));
+      this.load.audio("powerman_5000", Path.getAudioPath("music/powerman_5000.mp3"));
     }
   }
 
   private createEnemy(x: number, y: number): void {
     let enemySprite = this.physics.add.sprite(x, y, "enemy");
     let enemyInterface = new GameEntityInterface(this);
-    let enemy = new Enemy(enemySprite, enemyInterface);
+    let sounds:Phaser.Sound.BaseSound[] = [
+      this.sound.add("enemy|kill"),
+      this.sound.add("enemy|death")
+    ];
+    let enemy = new Enemy(enemySprite, enemyInterface, sounds);
     let waveDamage = this.wave + 1;
     enemy.damage = waveDamage >= this.maxWaveDamage ? this.maxWaveDamage : waveDamage;
     this.enemyCount++;
-    if (this.enemyCount % 10 == 0) {
+    if (this.enemyCount % 5 == 0) {
       this.wave++;
       this.waveInterval -= this.waveInterval <= this.maxWaveInterval ? 0 : 250;
     }
@@ -199,7 +234,14 @@ export class GameScene extends Phaser.Scene {
 
   private createPlayer(): Player {
     let playerSprite = this.physics.add.sprite(100, 300, "player");
-    this.player = new Player(playerSprite, new GameEntityInterface(this));
+    let sounds:Phaser.Sound.BaseSound[] = [
+      this.sound.add("player|doubleDamage"),
+      this.sound.add("player|regeneration"),
+      this.sound.add("player|anger"),
+      this.sound.add("player|thanks"),
+      this.sound.add("player|death")  
+    ];    
+    this.player = new Player(playerSprite, new GameEntityInterface(this), sounds);
     this.createPlayerAnims();
     return this.player;
   }

@@ -3,8 +3,8 @@ import { GameEntityInterface } from "./gameEntityInterface";
 
 export class Enemy extends GameEntity {
 
-    constructor(sprite: Phaser.Physics.Arcade.Sprite, enemyInterface: GameEntityInterface) {
-        super(sprite, enemyInterface);
+    constructor(sprite: Phaser.Physics.Arcade.Sprite, enemyInterface: GameEntityInterface, sounds:Phaser.Sound.BaseSound[] = []) {
+        super(sprite, enemyInterface, sounds);
         this.speed = 80;
         this.entityName = "enemy";
         this.damage = 1;

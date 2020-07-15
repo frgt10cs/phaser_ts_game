@@ -28,6 +28,7 @@ export abstract class GameEntity {
     get isDead(): boolean {
         return this._isDead;
     }
+    private sounds: Phaser.Sound.BaseSound[];
 
     protected attackTargets: GameEntity[];
     protected entityInetrface: GameEntityInterface;
@@ -35,7 +36,7 @@ export abstract class GameEntity {
     sprite: Phaser.Physics.Arcade.Sprite;
     anims: Phaser.Types.Animations.Animation[];
 
-    constructor(sprite: Phaser.Physics.Arcade.Sprite, entityInetrface:GameEntityInterface) {
+    constructor(sprite: Phaser.Physics.Arcade.Sprite, entityInetrface: GameEntityInterface, sounds: Phaser.Sound.BaseSound[] = []) {
         this.sprite = sprite;
         this.sprite.setCollideWorldBounds(true);
         this.sprite.setGravityY(300);
@@ -53,28 +54,34 @@ export abstract class GameEntity {
         this._isDead = false;
         this.attackTargets = [];
         this.blockingAnims = ["attack", "attack_walk", "death"];
+        this.sounds = sounds;
 
-        this.sprite.on("animationcomplete", (animation, frame) => {                    
+        this.sprite.on("animationcomplete", (animation, frame) => {
             if (this.blockingAnims.indexOf(animation.key.split("|")[1]) != -1)
-                this.isAnimBlocked = false;                            
+                this.isAnimBlocked = false;
             if (animation.key.includes("attack")) {
                 this.attackTargets.forEach((target) => {
                     if (!target._isDead && Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, target.sprite.x, target.sprite.y) <= this.attackDistance) {
-                        target.hurt(this.damage);
+                        if (target.hurt(this.damage)) {
+                            this.playSound("kill");
+                        }
                     }
                 });
             }
         }, this);
     }
 
-    hurt(damage: number): void {
-        if (this._isDead) return;
+    hurt(damage: number): boolean {
+        if (this._isDead) return false;
+        let isKilled = false;
         this.health -= damage;
         this.entityInetrface.removeHealthPoints(damage);
-        if (this.health <= 0){
+        if (this.health <= 0) {
             this.entityInetrface.destroyHealthBar();
-            this.onDeath();                                
-        }            
+            this.onDeath();
+            isKilled = true;
+        }
+        return isKilled;
     }
 
     heal(hp: number) {
@@ -102,13 +109,24 @@ export abstract class GameEntity {
         this._isAble = false;
         this.playAnim("death", true);
         this.sprite.setVelocityX(0);
+        this.playSound("death");
     }
 
-    playAnim(animName: string, force: boolean = false, startFrame: number = 0): void {        
+    playAnim(animName: string, force: boolean = false, startFrame: number = 0): void {
         if (this.isAnimBlocked && !force) return;
         this.sprite.anims.play(this.entityName + "|" + animName + "|" + direction[this.direction], true, startFrame);
         if (this.blockingAnims.indexOf(animName) != -1) {
-            this.isAnimBlocked = true;            
-        }        
+            this.isAnimBlocked = true;
+        }
+    }
+
+    playSound(key: string): void {
+        key = this.entityName + "|" + key;
+        for (let i = 0; i < this.sounds.length; i++) {
+            if (this.sounds[i].key == key) {
+                this.sounds[i].play();
+                break;
+            }
+        }
     }
 }

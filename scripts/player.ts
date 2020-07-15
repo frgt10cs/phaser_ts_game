@@ -5,8 +5,8 @@ import { GameEntityInterface } from './gameEntityInterface';
 
 export class Player extends GameEntity {
   points: number;
-  constructor(sprite: Phaser.Physics.Arcade.Sprite, entityInterface:GameEntityInterface) {
-    super(sprite, entityInterface);
+  constructor(sprite: Phaser.Physics.Arcade.Sprite, entityInterface:GameEntityInterface, sounds:Phaser.Sound.BaseSound[] = []) {
+    super(sprite, entityInterface, sounds);
     this.maxHealth = this.health = 10;    
     this.speed = 160;
     this.runCoeff = 1.5;
@@ -14,7 +14,7 @@ export class Player extends GameEntity {
     this.damage = 10;
     this.entityName = "player";
     this.attackCooldown = 500;
-    this.entityInetrface.generateHealthBar(100, 100, this.maxHealth);
+    this.entityInetrface.generateHealthBar(100, 40, this.maxHealth);
   }
 
   handleControl(controlKeys: Phaser.Input.Keyboard.Key[], activePointer: Phaser.Input.Pointer, enemies: Enemy[]): void {
