@@ -83,6 +83,7 @@ export abstract class GameEntity {
             this.onDeath();
             isKilled = true;
         }
+        else this.playSound("pain");
         return isKilled;
     }
 
@@ -145,8 +146,18 @@ export abstract class GameEntity {
     }
 
     syncEffectsPosition(): void {
+        let minX;
+        let maxX;
+        if (this.direction == direction.right) {
+            minX = this.sprite.x - 20;
+            maxX = this.sprite.x + 5;
+        }
+        else {
+            minX = this.sprite.x - 5;
+            maxX = this.sprite.x + 20;
+        }
         this.emitters.forEach((emitter) => {
-            emitter.setPosition({ min: this.sprite.x - 20, max: this.sprite.x + 5 },
+            emitter.setPosition({ min: minX, max: maxX },
                 { min: this.sprite.y - 10, max: this.sprite.y + 10 });
         });
     }

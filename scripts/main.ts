@@ -1,6 +1,7 @@
 import 'phaser';
 import { MenuScene } from './menu';
 import { GameScene } from './game';
+import { PauseScene } from './pause';
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
   title: 'Sample',
@@ -21,10 +22,13 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
     disableWebAudio: true
   },
 
-  scene: [MenuScene, GameScene],
+  scene: [MenuScene, GameScene, PauseScene],
 
   parent: 'game',
   backgroundColor: '#FFFFFF',
 };
 
 export const game = new Phaser.Game(gameConfig);
+game.input.keyboard.onKeyDown = function(){
+
+}

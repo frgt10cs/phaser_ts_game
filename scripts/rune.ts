@@ -3,8 +3,7 @@ import { GameEntity } from "./gameEntity";
 export abstract class Rune {
     sprite: Phaser.GameObjects.Sprite;
     name: string;
-    emitterConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig;
-    emitter: Phaser.GameObjects.Particles.ParticleEmitter;
+    emitterConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig;    
     emitterManager: Phaser.GameObjects.Particles.ParticleEmitterManager;
     duration: number;    
 

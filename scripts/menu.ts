@@ -1,4 +1,5 @@
 import { SoundManager } from "./soundManager";
+import { Path } from "./path";
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -6,33 +7,30 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: "Scene"
 }
 
-export class MenuScene extends Phaser.Scene {  
+export class MenuScene extends Phaser.Scene {
   constructor() {
-    super(sceneConfig);    
+    super(sceneConfig);
   }
 
   create(): void {
-    const playBtn = this.add.text(100, 100, "Play", { fill: "#0f0" })
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.scene.start("Game"))
-      .on('pointerover', () => this.enterButtonHoverState(playBtn))
-      .on('pointerout', () => this.enterButtonRestState(playBtn))
-      .on('pointerdown', () => this.enterButtonActiveState(playBtn));
+    let bg = this.add.image(640, 360, "menuBackground");
 
-    const soundBtn = this.add.text(100, 200, "Music: off", { fill: "#0f0" })
+    const btnStyle = { fill: "#00FF1E", fontSize: "30px", stroke: "#00B715", strokeThickness: 3 };
+    const playBtn = this.add.text(1000, 300, "Play", btnStyle)
       .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => { 
-        if(SoundManager.isEnabled){
-          soundBtn.setText("Music: off");          
+      .on("pointerdown", () => this.scene.start("Game"));                
+
+    const soundBtn = this.add.text(1000, 350, "Music: off", btnStyle)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        if (SoundManager.isEnabled) {
+          soundBtn.setText("Music: off");
         }
-        else{
-          soundBtn.setText("Music: on");           
+        else {
+          soundBtn.setText("Music: on");
         }
         SoundManager.isEnabled = !SoundManager.isEnabled;
-      })
-      .on('pointerover', () => this.enterButtonHoverState(soundBtn))
-      .on('pointerout', () => this.enterButtonRestState(soundBtn))
-      .on('pointerdown', () => this.enterButtonActiveState(soundBtn));    
+      });
   }
 
   update(): void {
@@ -40,18 +38,6 @@ export class MenuScene extends Phaser.Scene {
   }
 
   preload(): void {
-    
-  }
-
-  enterButtonHoverState(button) {
-    button.setStyle({ fill: '#ff0' });
-  }
-
-  enterButtonRestState(button) {
-    button.setStyle({ fill: '#0f0' });
-  }
-
-  enterButtonActiveState(button) {
-    button.setStyle({ fill: '#0ff' });
+    this.load.image("menuBackground", Path.getImagePath("environment/menu_background.png"));
   }
 }
