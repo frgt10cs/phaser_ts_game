@@ -12,37 +12,37 @@ export class SoundManager {
     private static playlist: Phaser.Sound.BaseSound[];   
     private static currentTrackIndex: number;
     private static get currentSound(): Phaser.Sound.BaseSound {
-        return this.playlist[this.currentTrackIndex];
+        return SoundManager.playlist[SoundManager.currentTrackIndex];
     }
 
     static init(audios: Phaser.Sound.BaseSound[]): void {
-        this.currentTrackIndex = 0;
-        this.playlist = audios;
+        SoundManager.currentTrackIndex = 0;
+        SoundManager.playlist = audios;
     }
 
     static play(): void {
-        this.currentSound.play();
-        this.currentSound.once("complete", this.playNext);
-        this._soundState = SoundState.playing;      
+        SoundManager.currentSound.play();
+        SoundManager.currentSound.once("complete", this.playNext);
+        SoundManager._soundState = SoundState.playing;      
     }
 
     static pause(): void {
-        this.currentSound.pause();
-        this._soundState = SoundState.paused;        
+        SoundManager.currentSound.pause();
+        SoundManager._soundState = SoundState.paused;        
     }
 
     static resume(): void {
-        this.currentSound.resume();
-        this._soundState = SoundState.playing;        
+        SoundManager.currentSound.resume();
+        SoundManager._soundState = SoundState.playing;        
     }
 
     static playNext(): void {
-        this.currentTrackIndex = this.currentTrackIndex == this.playlist.length - 1 ? 0 : this.currentTrackIndex + 1;
-        this.play();
+        SoundManager.currentTrackIndex = SoundManager.currentTrackIndex == SoundManager.playlist.length - 1 ? 0 : SoundManager.currentTrackIndex + 1;
+        SoundManager.play();
     }
 
     static playPrev(): void {
-        this.currentTrackIndex = this.currentTrackIndex == 0 ? this.playlist.length - 1 : this.currentTrackIndex - 1;
-        this.play();
+        SoundManager.currentTrackIndex = SoundManager.currentTrackIndex == 0 ? SoundManager.playlist.length - 1 : SoundManager.currentTrackIndex - 1;
+        SoundManager.play();
     }
 }

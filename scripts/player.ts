@@ -3,8 +3,7 @@ import { GameEntity, direction } from "./gameEntity";
 import { Enemy } from './enemy';
 import { GameEntityInterface } from './gameEntityInterface';
 
-export class Player extends GameEntity {
-  points: number;
+export class Player extends GameEntity {  
   constructor(sprite: Phaser.Physics.Arcade.Sprite, entityInterface:GameEntityInterface, sounds:Phaser.Sound.BaseSound[] = []) {
     super(sprite, entityInterface, sounds);
     this.maxHealth = this.health = 10;    
@@ -18,7 +17,7 @@ export class Player extends GameEntity {
   }
 
   handleControl(controlKeys: Phaser.Input.Keyboard.Key[], activePointer: Phaser.Input.Pointer, enemies: Enemy[]): void {
-    this.refresh();
+    this.refreshMovingState();
     if (controlKeys["D"].isDown) {
       this.currentSpeed = 160;
       this.direction = direction.right;

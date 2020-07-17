@@ -14,7 +14,7 @@ export class Enemy extends GameEntity {
     }
 
     autoControl(player: GameEntity): void {
-        this.refresh();
+        this.refreshMovingState();
         if (this._isAble && !player.isDead) {
             if (!this.isAttacking) {
                 let diff = player.sprite.x - this.sprite.x;

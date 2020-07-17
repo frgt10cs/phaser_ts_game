@@ -1,16 +1,15 @@
 import { GameEntity } from "./gameEntity";
-
 export abstract class Rune {
     sprite: Phaser.GameObjects.Sprite;
     name: string;
-    emitterConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig;    
+    emitterConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig;
     emitterManager: Phaser.GameObjects.Particles.ParticleEmitterManager;
-    duration: number;    
+    duration: number;        
 
-    constructor(name: string, sprite: Phaser.GameObjects.Sprite,emitterManager: Phaser.GameObjects.Particles.ParticleEmitterManager) {
+    constructor(name: string, sprite: Phaser.GameObjects.Sprite, emitterManager: Phaser.GameObjects.Particles.ParticleEmitterManager) {
         this.name = name;
-        this.sprite = sprite;  
-        this.emitterManager =  emitterManager;
+        this.sprite = sprite;
+        this.emitterManager = emitterManager;
 
         this.emitterConfig = {
             lifespan: 2000,
@@ -21,46 +20,17 @@ export abstract class Rune {
         };
     }
 
-    action(entity: GameEntity) {        
+    action(entity: GameEntity) {
         this.onActivate(entity);
         setTimeout(() => {
-            this.onOver(entity);            
+            this.onOver(entity);
         }, this.duration);
     }
-   
-    getEmitter(){
+
+    getEmitter() {
         return this.emitterManager.createEmitter(this.emitterConfig);
     }
 
     abstract onActivate(entity: GameEntity): void;
     abstract onOver(entity: GameEntity): void;
-}
-
-export class DamageRune extends Rune {
-    constructor(name: string, sprite: Phaser.GameObjects.Sprite, emitterManager: Phaser.GameObjects.Particles.ParticleEmitterManager) {
-        super(name, sprite, emitterManager);
-        this.duration = 20000;
-    }
-    onActivate(entity: GameEntity): void {
-        entity.damage *= 2;
-    }
-    onOver(entity: GameEntity): void {
-        entity.damage /= 2;
-    }
-}
-
-export class HealingRune extends Rune {
-    healInterval;
-    constructor(name: string, sprite: Phaser.GameObjects.Sprite, emitterManager: Phaser.GameObjects.Particles.ParticleEmitterManager) {
-        super(name, sprite, emitterManager);
-        this.duration = 11000;
-    }
-    onActivate(entity: GameEntity): void {
-        this.healInterval = setInterval(() => {
-            entity.heal(1);
-        }, 1000);
-    }
-    onOver(entity: GameEntity): void {
-        clearInterval(this.healInterval);
-    }
 }

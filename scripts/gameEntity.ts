@@ -5,32 +5,39 @@ export enum direction {
 }
 
 export abstract class GameEntity {
+    protected entityName: string;
+
     protected health: number;
-    public maxHealth: number;
+    protected maxHealth: number;
+
+    public damage: number;
+
     protected speed: number;
     protected runCoeff: number;
-    public currentSpeed: number;
-    public direction: direction;
-    public isInAction: boolean;
-    public isAnimBlocked: boolean;
-    public currentAnimation: string;
+    protected currentSpeed: number;
+    protected direction: direction;
+
+    protected isInAction: boolean;
+    private isAnimBlocked: boolean;
+    protected currentAnimation: string;
+    protected blockingAnims: string[];
+
     protected _isAble: boolean;
     get isAble(): boolean {
         return this._isAble;
     }
-    public blockingAnims: string[];
-    protected entityName: string;
-    public isAttacking;
-    public damage: number;
-    protected attackDistance: number;
-    public attackCooldown: number;
     protected _isDead;
     get isDead(): boolean {
         return this._isDead;
     }
-    private sounds: Phaser.Sound.BaseSound[];
 
+    protected isAttacking;
+    protected attackDistance: number;
+    protected attackCooldown: number;
     protected attackTargets: GameEntity[];
+
+    private sounds: Phaser.Sound.BaseSound[];
+    
     protected entityInetrface: GameEntityInterface;
     protected emitters: Phaser.GameObjects.Particles.ParticleEmitter[];
 
@@ -103,7 +110,7 @@ export abstract class GameEntity {
         }, this.attackCooldown);
     }
 
-    refresh(): void {
+    refreshMovingState(): void {
         this.currentSpeed = 0;
         this.isInAction = false;
         this.currentAnimation = "idle";
@@ -146,8 +153,8 @@ export abstract class GameEntity {
     }
 
     syncEffectsPosition(): void {
-        let minX;
-        let maxX;
+        let minX: number;
+        let maxX: number;
         if (this.direction == direction.right) {
             minX = this.sprite.x - 20;
             maxX = this.sprite.x + 5;

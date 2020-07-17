@@ -29,6 +29,3 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 };
 
 export const game = new Phaser.Game(gameConfig);
-game.input.keyboard.onKeyDown = function(){
-
-}
