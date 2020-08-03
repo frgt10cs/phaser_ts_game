@@ -12,4 +12,4 @@ Every 5 enemies - new wave with more damage and less spawn interval
 
 Pick up leafs to heal yourself
 
-Runes spawn every 40 seconds. Each one has special buff to you
+Runes spawn every 40 seconds. Each one has special buff for you
